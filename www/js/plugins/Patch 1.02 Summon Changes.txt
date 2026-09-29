@@ -1,0 +1,82 @@
+The Slime
+
+The slime is a water summon that specializes in poison, both in poisoning enemies for damage-over-time AND the player's party and turning the poison into heals-over-time!
+
+Level 1: Water Strike - Single target water damage.
+Level 2: Water Strike All - Deals water damage to all enemies.
+Level 3: Poison - -1 HP/turn to one enemy.
+Level 4: Water Damage 1 - Increases water damage dealt by the whole party by one.
+Level 5: Water Resist 1 - Decreases water damage taken by the whole party by one.
+Level 6: Poison Heal - +2 HP/turn for allies with poison 
+Level 6: Poison All - Poisons all enemies 
+Level 6: Poison All Allies - Poisons all allies at instant speed.
+Level 7: Toxic - -2 HP/turn to one enemy.
+Level 8: Toxic All - -2 HP/turn to all enemies.
+Level 9: Water Bolt - Deals water damage to one enemy twice.
+Level 10: Toxic Heal- +4 HP/turn for all allies with toxic. 
+Level 10: Toxic All Allies - Inflicts toxic on all allies at instant speed.
+
+The bat:
+
+The bat specializes in bleed effects and at max level can give Vampirism to one ally that can heal off massive damage!
+
+Level 1: Wind Strike - Single target wind damage.
+Level 2: Wind Strike All - Deals wind damage to all enemies.
+Level 3: Draining Bite - Heals 100% of damage done and inflicts bleed (-1 HP/turn).
+Level 4: Wind Damage 1 - Increases wind damage dealt by the whole party by one.
+Level 5: Wind Resist 1 - Decreases wind damage taken by the whole party by one.
+Level 6: Confusion Immunity - Allies cannot be inflicted with confusion.
+Level 7: Confusion - Inflicts confusion on one enemy, causing them to attack allies randomly. Can only be used once per enemy per battle.
+Level 8: Bleed Immunity (Passive) - Allies cannot be inflicted with bleed.
+Level 9: Wind Bolt - Deals wind damage to one enemy twice.
+Level 10: Vampirism - Applies vampirism to one ally at instant speed. Vampirism causes an attacker to heal for 50% of damage dealt to
+bleeding enemies. 
+Level 10: Draining Bite All - Heals 100% of damage done and inflicts bleed on all enemies (-1 HP/turn).
+
+The Firefly
+
+The firefly specializes in thunder damage, as well as speed control: slowing down enemies and, at max level, speeding UP allies by inflicting paralysis and then reversing the speed changes on allies!
+
+Level 1: Thunder Strike - Single target thunder damage.
+Level 2: Thunder Strike All - Deals thunder damage to all enemies.
+Level 3: Paralysis - -1 Agility to one enemy.
+Level 4: Thunder Damage 1 - Increases thunder damage dealt by the whole party by one.
+Level 5: Thunder Resist 1 - Decreases thunder damage taken by the whole party by one.
+Level 6: Cure paralysis - Cures all allies of paralysis and statis at instant speed.
+Level 7: Stasis - -2 Agility to one enemy.
+Level 8: Stasis All - -2 Agility to all enemies.
+Level 9: Thunder Bolt - Deals thunder damage to one enemy twice.
+Level 10: Polarity (Passive) - +2 Agility to all allies with paralysis. +4 Agility to all allies with stasis.
+Level 10: Stasis All Allies - Inflicts stasis on all allies at instant speed.
+
+The ghost
+
+The ghost is a more offensive oriented summon: like the slime, it can inflict damage over time on enemies and apply damage-over-time to its
+own party to inflict even more damage.
+
+Level 1: Dark Strike - Single target dark damage.
+Level 2: Dark Strike All - Deals dark damage to all enemies.
+Level 3: Curse - -1 HP/turn to one enemy.
+Level 4: Dark Damage 1 - Increases dark damage dealt by the whole party by one.
+Level 5: Dark Resist 1 - Decreases dark damage taken by the whole party by one.
+Level 6: Curse immunity - Allies are immune to curse. Can be toggled on and off at instant speed.
+Level 6: Doom immunity (Passive) - Allies are immune to doom.​
+Level 7: Hex - -2 HP/turn to one enemy.
+Level 8: Hex All - -2 HP/turn to all enemies.
+Level 9: Dark Bolt - Deals dark damage to one enemy twice.
+Level 10: Voodoo Doll (Passive) - Each enemy takes 1 damage at the end of the turn for each ally with curse.
+Level 10: Curse All Allies - Inflicts curse on all allies at instant speed.
+
+The calcite is a more defensive oriented summon: it specializes in ground damage, with passive buffs to defense and magic defense, as well as the ability to protect allies from single target attacks and apply barriers that absorb incoming damage.
+
+Level 1: Ground Strike - Single target ground damage.
+Level 2: Ground Strike All - Deals ground damage to all enemies.
+
+Level 3: Barrier - One ally absorbs 2 damage.
+Level 4: Ground Damage 1 - Increases ground damage dealt by the whole party by one.
+Level 5: Ground Resist 1 - Decreases ground damage taken by the whole party by one.
+Level 6: Defense 1 (Passive) - +1 Defense to all allies.
+Level 7: Magic Defense 1 (Passive) - +1 Magic Defense to all allies.
+Level 8: Protect - Takes single target damage in the place of one ally.
+Level 9: Ground Bolt - Deals dark damage to one enemy twice.
+Level 10: Barrier All - All allies absorb 2 damage.

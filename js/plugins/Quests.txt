@@ -1,0 +1,37 @@
+A Peel For Help:
+Vee DiMinci asks you to visit the local dog trainer
+The local dog trainer wants 500 gold and 20 rat meat in exchange
+Return to Vee: he agrees, but doesn't have the rat meat.
+You return to the dog trainer with the rat meat.
+You return to Vee, he asks you to clear out the orchard.
+You fight 8 packs of rats and Scurvius
+Return to Vee who awards you with gold and a staff that allows anyone to cast white magic.
+
+Dig, Dig a Tunnel:
+Meet Jenny outside a tunnel, asks if you're there to help and you say yes.
+Cutscene of the people actually meant to help coming up and finding out, confronting you in the tunnel.
+The Captain lets you stay if you make yourself useful.
+Cast heal on 6 tunnelers.
+Cast Ground Strike on 10 boulders.
+Move three piles of sand out of the way
+Cutscene with Harry, Jenny, and Kylie retreating from hyenas.
+Defeat 3 packs of hyenas.
+Defeat Alpha Hyena.
+Quest complete (reward TBD).
+
+Dryadic Ritual:
+You go into the castle basement.
+Find the 4 hints to unlock the gate (can be done without if you know the code with a short cutscene)
+Fight and defeat the Dryad
+Receive a piece of gear of your choice, 500 gold, and the ability to teleport back.
+
+Pet Cemetery:
+Little Tiffany learns you're a necromancer, asks you to try and bring her dog back to life.
+Cut to Kelly watching the scene, retuning the dog to life as a demon.
+You succeed, but Little Tiffany's dog is a Hellhound that tries to kill her and your party.
+You defeat the dog, and Little Tiffany has to come to terms with death and that his dog is gone forever.
+
+Solo's Mission:
+TBD
+Fight Solo, who is not a snake but a dragon.
+Quest complete (reward TBD)

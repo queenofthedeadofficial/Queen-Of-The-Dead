@@ -1,0 +1,12 @@
+Summon Level Up Common Events:
+Goblin DONE
+Slime DONE
+Cirrus DONE
+Firefly DONE
+Calcite DONE
+Bat DONE
+Wisp DONE
+Ghost DONE
+Lasher Done
+Rat DONE
+Hyena

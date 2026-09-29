@@ -1,0 +1,20 @@
+Patch:
+Character level ups have been removed from the game. I initially thought allowing 1 MP per character per level up would not be game breaking, but it did end up still being way too powerful. One of the core points of combat difficulty in playtesting I experienced was balancing the restoration of HP and curing status conditions against restoring mana with Emma's "Life of the Party". Even with the experience required to level up being set to the maximum that RPGM's classes would allow, the extra MP Emma gains from even modest gold farming makes combat far too easy, as you almost never have to restore mana and can focus exclusively on recovering HP, curing status conditions, dealing damage, or applying HoTs/DoTs, so character levels have been removed from the game with the primary method of gaining MP in the future to be consumables acquired from Alpha monsters: each of which will only be usable once per character.
+
+Summons max level will also be reduced to 10. Reducing the max level to 10 gives me the latitude to distribute some of the power that was originally going to be given to them to other, more powerful summons later in the game without compromising their identities as party members.
+
+Added gold bonus from Professor Harrison for both learning new summons and leveling up summons. New summons give 240 gold, each level up gives 25 gold. If Guard Anne has a question mark over her head, you make speak to her to collect your gold.
+A Peel For Help's journal data has been completed.
+Dryadic Ritual's journal data has been completed.
+Fixed bug where Mana Potions were made with Cooked Tilapia instead of Cooked Brilliant Fish
+Fixed bug where opening the journal to A Peel For Help froze the game
+Fixed bug where there was no notification for updating the journal when accepting Flower Power
+Fixed bug where the Phurston Inn did not charge the player for using the inn.
+Fixed bug where Formaldehyde soups could not be made, despite having the recipe.
+Fixed bug where learning Hyena Flank from Amy awarded the Cod Recipe.
+Phurston cave received a graphical overhaul
+Patched dead tiles in Phurston Cave
+Removed Optimize option from the Equip Screen
+Fixed bug with the Truesilver Ring that recovers all MP outside of combat.
+Added a "Check Location" to the Soul Tether skill, which tells you which map your teleport is set to.
+The woman picking herbs west of the Phurston Magical Academy was removed to reduce the lag some players experienced around from the end of Sorceress Cavern to the end of The Real Game Begins. Press F to pay respects o7
