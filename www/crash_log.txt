@@ -1,5 +1,0 @@
-2025-12-07T21:26:46.452Z  Crash logger installed. Writing to: C:\Users\engla\Documents\Games\Project10/crash_log.txt
-2025-12-07T21:26:50.924Z  SceneManager.push -> Scene_Load
-2025-12-07T21:27:09.330Z  SceneManager.push -> Scene_Menu
-2025-12-07T21:27:11.018Z  SceneManager.push -> Scene_Item
-2025-12-07T21:30:09.446Z  Wrapped Scene_Item.create/start for debugging
