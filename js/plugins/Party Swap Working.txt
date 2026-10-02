@@ -1,0 +1,40 @@
+/*:
+ * @plugindesc Swap party members in battle (YEP compatible)
+ */
+
+(function() {
+    "use strict";
+
+    window.swapPartyMembers = function(user, target) {
+        if (!user || !target) return;
+
+        var party = $gameParty._actors;
+
+        var i = party.indexOf(user.actorId());
+        var j = party.indexOf(target.actorId());
+
+        if (i < 0 || j < 0 || i === j) return;
+
+        // Swap order
+        var temp = party[i];
+        party[i] = party[j];
+        party[j] = temp;
+
+        // Force full refresh of battle members
+        $gameParty.refresh();
+
+        // Rebuild battle members (critical)
+        BattleManager._actionBattlers = [];
+        BattleManager._targets = [];
+
+        // Refresh UI
+        if (SceneManager._scene._statusWindow) {
+            SceneManager._scene._statusWindow.refresh();
+        }
+
+        if (BattleManager._spriteset) {
+            BattleManager._spriteset.refreshBattlers();
+        }
+    };
+
+})();

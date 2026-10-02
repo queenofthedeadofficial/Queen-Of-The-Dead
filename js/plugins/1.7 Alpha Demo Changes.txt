@@ -1,0 +1,21 @@
+These are the recent changes:
+
+Pet Cemetery re-added to the demo, rewarding Fluffy's Collar (+2 Attack to Rose's Rat when equipped by any party member).
+
+Dead Herring re-added to the demo with an updated cutscene, rewarding the 
+
+Flower Power added to the game, rewarding the Magic Lily that gives Rose's Lasher +2 Magic Attack when equipped by any party member.
+
+Pipe Dream added to the game, rewarding the Emiraji Blowpipe that can deal medium fixed damage, as well as inflict burn (1 damage when using a physical attack) poison (-1 HP/turn), or paralysis (-1 Agility).
+
+Player now starts with Attack Potion Recipe and Bluegill recipe. No new recipes are acquirable in the demo from Ciara and Amy except Putrid Perfume via Dead Herring.
+
+Added help boxes for AFK Fishing and AFK Scavenging. They will now notify you you're AFK Fishing or Scavenging, what buttons to press to exit, and how many fish you've caught/resources scavenged.
+
+Professor Harrison will now help you research necromancy after you speak to him for the first time with new information. He will give your summon a flat amount of experience the next time you speak to him. The amount of experience he generates is based on the level of the summon you have him research and the amount of time you've had him researching summons with you.
+
+Fixed Poison Heal and Toxic Heal
+
+Minor tweaks to the storage units in the player's apartment.
+
+Full Learnset Data in the menu for each summon: it shows at what level each skill is learned and how much experience is required to reach that level.
