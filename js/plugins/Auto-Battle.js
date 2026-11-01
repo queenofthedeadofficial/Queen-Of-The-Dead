@@ -91,6 +91,57 @@ BattleManager.startTurn = function() {
 };
 
 // -----------------------------------------------------
+// START OF TURN: CLEAR LAST SKILL IF NO LONGER KNOWN
+// -----------------------------------------------------
+// A battler can lose access to the skill they last used between turns
+// (skill sealed by a forgotten/removed skill, unequipped weapon or armor
+// that granted it via a "Add Skill" trait, class change, party swap, etc).
+// Auto-Battle replays _lastBattleAction, so a stale entry would otherwise
+// keep trying to replay a skill the actor can't use at all anymore.
+//
+// BattleManager.startInput() fires at the start of each turn's input phase
+// (and once at battle start), before the party command window builds its
+// command list. Clearing here means the Auto-Battle button's eligibility
+// check (allActorsHaveStoredAction) also sees the cleared state, so the
+// command is correctly disabled for anyone left with nothing to replay.
+//
+// Only skill entries are checked. Basic Attack and Guard are intrinsic
+// actions that aren't part of an actor's learned skill list, so they're
+// exempt. Items are untouched -- they don't depend on known skills.
+function actorKnowsSkill(actor, skillId) {
+    if (typeof actor.skills === "function") {
+        return actor.skills().some(function(skill) {
+            return skill && skill.id === skillId;
+        });
+    }
+    if (typeof actor.hasSkill === "function") {
+        return actor.hasSkill(skillId);
+    }
+    return true;
+}
+
+function clearUnknownLastSkills() {
+    for (const actor of $gameParty.battleMembers()) {
+        const last = actor._lastBattleAction;
+        if (!last || last.type !== "skill") continue;
+
+        const attackId = typeof actor.attackSkillId === "function" ? actor.attackSkillId() : 1;
+        const guardId  = typeof actor.guardSkillId  === "function" ? actor.guardSkillId()  : 2;
+        if (last.id === attackId || last.id === guardId) continue;
+
+        if (!actorKnowsSkill(actor, last.id)) {
+            actor._lastBattleAction = null;
+        }
+    }
+}
+
+const _BattleManager_startInput = BattleManager.startInput;
+BattleManager.startInput = function() {
+    clearUnknownLastSkills();
+    _BattleManager_startInput.call(this);
+};
+
+// -----------------------------------------------------
 // DART SKILLS: MISSING-ITEM MESSAGE (AUTO-BATTLE ONLY)
 // -----------------------------------------------------
 // Skills 376-379 each consume a specific dart item behind the scenes.

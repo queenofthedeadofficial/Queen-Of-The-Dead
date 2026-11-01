@@ -488,3 +488,77 @@ Window_CTBIcon.prototype.isReduceOpacity = function() {
 }; // Imported.YEP_X_BattleSysCTB
 
 }
+
+//=============================================================================
+// YEP_X_TurnOrderDisplay compatibility
+//=============================================================================
+
+if (Imported.YEP_X_TurnOrderDisplay) {
+
+// Fade the turn order icons while the enemy status page is visible.
+ADRI_InBattleEnemyStatus_Window_TurnOrderIcon_isReduceOpacity =
+  Window_TurnOrderIcon.prototype.isReduceOpacity;
+Window_TurnOrderIcon.prototype.isReduceOpacity = function() {
+  var win = SceneManager._scene._inBattleEnemyStatusWindow;
+  if (win && win.visible) return true;
+  return ADRI_InBattleEnemyStatus_Window_TurnOrderIcon_isReduceOpacity.call(this);
+};
+
+// Turn order icons only re-check their target opacity when the scene requests
+// it, so request it whenever the enemy status page opens, closes, or switches.
+if (Imported.YEP_X_InBattleStatus) {
+
+ADRI_InBattleEnemyStatus_TOD_commandInBattleEnemyStatus =
+  Scene_Battle.prototype.commandInBattleEnemyStatus;
+Scene_Battle.prototype.commandInBattleEnemyStatus = function() {
+  ADRI_InBattleEnemyStatus_TOD_commandInBattleEnemyStatus.call(this);
+  this.requestUpdateTurnOrderDisplayX();
+};
+
+ADRI_InBattleEnemyStatus_TOD_onInBattleEnemyStatusCancel =
+  Scene_Battle.prototype.onInBattleEnemyStatusCancel;
+Scene_Battle.prototype.onInBattleEnemyStatusCancel = function() {
+  ADRI_InBattleEnemyStatus_TOD_onInBattleEnemyStatusCancel.call(this);
+  this.requestUpdateTurnOrderDisplayX();
+};
+
+ADRI_InBattleEnemyStatus_TOD_switchToInBattleEnemyStatusWindow =
+  Scene_Battle.prototype.switchToInBattleEnemyStatusWindow;
+Scene_Battle.prototype.switchToInBattleEnemyStatusWindow = function() {
+  ADRI_InBattleEnemyStatus_TOD_switchToInBattleEnemyStatusWindow.call(this);
+  this.requestUpdateTurnOrderDisplayX();
+};
+
+ADRI_InBattleEnemyStatus_TOD_switchToInBattleStatusWindow =
+  Scene_Battle.prototype.switchToInBattleStatusWindow;
+Scene_Battle.prototype.switchToInBattleStatusWindow = function() {
+  ADRI_InBattleEnemyStatus_TOD_switchToInBattleStatusWindow.call(this);
+  this.requestUpdateTurnOrderDisplayX();
+};
+
+}; // Imported.YEP_X_InBattleStatus
+
+}; // Imported.YEP_X_TurnOrderDisplay
+
+//=============================================================================
+// Turn order fade failsafe (does not depend on plugin load order)
+//=============================================================================
+
+ADRI_InBattleEnemyStatus_TOD_Scene_Battle_update = Scene_Battle.prototype.update;
+Scene_Battle.prototype.update = function() {
+  ADRI_InBattleEnemyStatus_TOD_Scene_Battle_update.call(this);
+  this.updateEnemyStatusTurnOrderFade();
+};
+
+Scene_Battle.prototype.updateEnemyStatusTurnOrderFade = function() {
+  var icons = this._turnOrderDisplay;
+  if (!icons) return;
+  var win = this._inBattleEnemyStatusWindow;
+  if (win && win.visible) {
+    this._adriEnemyStatusFadingTurnOrder = true;
+    for (var i = 0; i < icons.length; ++i) icons[i]._targetOpacity = 0;
+  } else if (this._adriEnemyStatusFadingTurnOrder) {
+    this._adriEnemyStatusFadingTurnOrder = false;
+    if (this.requestUpdateTurnOrderDisplayX) this.requestUpdateTurnOrderDisplayX();
+  }
+};
