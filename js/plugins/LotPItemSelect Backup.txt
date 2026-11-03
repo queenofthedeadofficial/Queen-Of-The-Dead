@@ -1,0 +1,423 @@
+/*:
+ * @plugindesc LotP Skill 58 item selection with Auto-Battle integration (FIXED).
+ *             Records lastItem on confirm; auto-applies lastItem when Auto-Battle casts Skill 58.
+ *             Adds LotP-authoritative storage and a tokenized pending flow to avoid UI locks.
+ *             FIX: Properly removes 'derived' context using splice instead of pop
+ * @author Copilot (patched), Fixed for context leak
+ */
+
+(function() {
+  // State
+  let selectedItem = null;
+  let pendingItemUse = false;
+  let actingActor = null;
+  let skillItemActive = false;
+  let autoModePending = false;
+
+  // Token to tie pending item use to a specific action instance
+  let pendingItemUseToken = 0;   // increments each time we start a LotP flow
+  let activePendingToken = 0;    // the token currently expected by endAction
+
+  // Safe subject capture
+  function getActionSubject(action) {
+    return (action && action.subject && action.subject()) || (BattleManager.actor && BattleManager.actor()) || BattleManager._subject || null;
+  }
+
+  // Strict auto detection: require non-interactive AND macro context contains 'derived'
+  function isAutoBattleActiveForActor(actor) {
+    try {
+      if (!actor) return false;
+      const nonInteractive = (typeof BattleManager !== 'undefined' && BattleManager._inputting === false);
+      const hasMacroContext = ($gameTemp && $gameTemp._macroContext && $gameTemp._macroContext.length > 0);
+      const hasDerived = hasMacroContext && $gameTemp._macroContext.indexOf('derived') !== -1;
+      if (typeof console !== 'undefined') {
+        console.log("isAutoBattleActiveForActor:", actor ? actor.name() : "NULL",
+                    "nonInteractive:", nonInteractive,
+                    "hasDerived:", hasDerived);
+      }
+      return nonInteractive && hasDerived;
+    } catch (e) {
+      if (typeof console !== 'undefined') console.warn("isAutoBattleActiveForActor error:", e);
+      return false;
+    }
+  }
+
+  // Prefer LotP's own recorded lastItem, then fall back to Auto-Battle macro
+  function getActorLastItemData(actor) {
+    if (!actor) return null;
+
+    // 1) LotP authoritative storage
+    try {
+      if ($gameSystem && $gameSystem._lotpLastItems) {
+        const lotpId = $gameSystem._lotpLastItems[actor.actorId()];
+        if (lotpId && $dataItems[lotpId] && $gameParty.numItems($dataItems[lotpId]) > 0) {
+          return $dataItems[lotpId];
+        }
+      }
+    } catch (e) {
+      if (typeof console !== 'undefined') console.warn("getActorLastItemData lotp lookup error:", e);
+    }
+
+    // 2) Existing Auto-Battle macro (legacy)
+    try {
+      if ($gameSystem && $gameSystem._actorMacros) {
+        const macro = $gameSystem._actorMacros[actor.actorId()];
+        if (macro && macro.lastItem && $dataItems[macro.lastItem] && $gameParty.numItems($dataItems[macro.lastItem]) > 0) {
+          return $dataItems[macro.lastItem];
+        }
+      }
+    } catch (e) {
+      if (typeof console !== 'undefined') console.warn("getActorLastItemData macro lookup error:", e);
+    }
+
+    return null;
+  }
+
+  // FIXED: Helper to properly remove 'derived' context by value
+  function removeContextByValue(value) {
+    try {
+      if ($gameTemp && $gameTemp._macroContext && Array.isArray($gameTemp._macroContext)) {
+        const index = $gameTemp._macroContext.indexOf(value);
+        if (index !== -1) {
+          $gameTemp._macroContext.splice(index, 1);
+          if (typeof console !== 'undefined') {
+            console.log("Context removed:", value, "remaining stack:", $gameTemp._macroContext);
+          }
+          return true;
+        }
+      }
+    } catch (e) {
+      if (typeof console !== 'undefined') console.error("removeContextByValue error:", e);
+    }
+    return false;
+  }
+
+  // --- Hook Game_Action.apply to detect Skill 58 ---
+  const _Game_Action_apply = Game_Action.prototype.apply;
+  Game_Action.prototype.apply = function(target) {
+    _Game_Action_apply.call(this, target);
+    try {
+      const item = this.item && this.item();
+      if (!item) return;
+      if (item.id === 58) {
+        actingActor = getActionSubject(this);
+
+        // Start a LotP pending flow and record a token for this action instance
+        pendingItemUse = true;
+        pendingItemUseToken = (pendingItemUseToken + 1) & 0x7fffffff;
+        activePendingToken = pendingItemUseToken;
+
+        autoModePending = isAutoBattleActiveForActor(actingActor);
+        // If autoModePending, defer handling to endAction (safer); otherwise mark interactive
+        if (autoModePending) {
+          if (typeof console !== 'undefined') console.log("Skill 58 detected (auto candidate) for", actingActor ? actingActor.name() : "NULL", " token:", activePendingToken);
+        } else {
+          skillItemActive = true;
+          if (typeof console !== 'undefined') console.log("Skill 58 detected (interactive) for", actingActor ? actingActor.name() : "NULL", " token:", activePendingToken);
+        }
+      }
+    } catch (e) {
+      if (typeof console !== 'undefined') console.error("Game_Action.apply (LotP) error:", e);
+    }
+  };
+
+  // --- End action: handle interactive menu or auto-apply lastItem/fallback ---
+  const _BattleManager_endAction = BattleManager.endAction;
+  BattleManager.endAction = function() {
+    if (pendingItemUse) {
+      // consume the pending flag locally but only proceed if the token still matches
+      const myToken = activePendingToken;
+      pendingItemUse = false;
+
+      // If token mismatch, another action started since this one — ignore to avoid misfires
+      if (myToken === 0 || myToken !== pendingItemUseToken) {
+        // Clear any stray flags and continue normally
+        skillItemActive = false;
+        autoModePending = false;
+        activePendingToken = 0;
+        if (typeof console !== 'undefined') console.log("LotP: pending token mismatch; skipping LotP handling. myToken:", myToken, "currentToken:", pendingItemUseToken);
+        _BattleManager_endAction.call(this);
+        return;
+      }
+
+      // proceed with the LotP handling
+      // Auto branch
+      if (autoModePending) {
+        autoModePending = false;
+        try {
+          // Prefer LotP authoritative lastItem, then macro lastItem
+          let lastItemData = getActorLastItemData(actingActor);
+
+          // Debug log candidate
+          if (typeof console !== 'undefined') {
+            const lotpId = ($gameSystem && $gameSystem._lotpLastItems) ? $gameSystem._lotpLastItems[actingActor ? actingActor.actorId() : -1] : null;
+            const macroId = ($gameSystem && $gameSystem._actorMacros && actingActor) ? ($gameSystem._actorMacros[actingActor.actorId()] && $gameSystem._actorMacros[actingActor.actorId()].lastItem) : null;
+            console.log("Auto-mode: lotpId:", lotpId, "macroId:", macroId, "resolved:", lastItemData ? lastItemData.name : "NULL");
+          }
+
+          if (lastItemData && $gameParty.numItems(lastItemData) > 0) {
+            selectedItem = lastItemData;
+            skillItemActive = false;
+            if (typeof console !== 'undefined') console.log("Auto-mode: applying recorded lastItem for", actingActor ? actingActor.name() : "NULL", "-", selectedItem.name);
+            applySelectedItemEffects();
+
+            // FIXED: Use removeContextByValue instead of pop
+            removeContextByValue('derived');
+
+            // clear active token so it cannot be reused
+            activePendingToken = 0;
+
+            // continue battle flow
+            _BattleManager_endAction.call(this);
+            return;
+          }
+
+          // If recorded lastItem missing from inventory, try to find the same id in party items (defensive)
+          let lastItemId = null;
+          try {
+            if ($gameSystem && $gameSystem._lotpLastItems && actingActor) {
+              lastItemId = $gameSystem._lotpLastItems[actingActor.actorId()] || null;
+            }
+            if (!lastItemId && $gameSystem && $gameSystem._actorMacros && actingActor) {
+              const macro = $gameSystem._actorMacros[actingActor.actorId()];
+              if (macro && macro.lastItem) lastItemId = macro.lastItem;
+            }
+          } catch (e) {
+            lastItemId = null;
+          }
+
+          if (lastItemId) {
+            const foundById = $gameParty.items().find(it => it && it.id === lastItemId && $gameParty.numItems(it) > 0);
+            if (foundById) {
+              selectedItem = foundById;
+              skillItemActive = false;
+              if (typeof console !== 'undefined') console.log("Auto-mode: found recorded lastItem by id in inventory:", selectedItem.name);
+              applySelectedItemEffects();
+              // FIXED: Use removeContextByValue instead of pop
+              removeContextByValue('derived');
+              activePendingToken = 0;
+              _BattleManager_endAction.call(this);
+              return;
+            }
+          }
+
+          // Fallback: select first available item
+          const availableItems = $gameParty.items().filter(it => it && $gameParty.numItems(it) > 0);
+          if (availableItems && availableItems.length > 0) {
+            selectedItem = availableItems[0];
+            skillItemActive = false;
+            if (typeof console !== 'undefined') console.log("Auto-mode: using fallback item:", selectedItem.name);
+            applySelectedItemEffects();
+            // FIXED: Use removeContextByValue instead of pop
+            removeContextByValue('derived');
+            activePendingToken = 0;
+            _BattleManager_endAction.call(this);
+            return;
+          }
+
+          // No items at all — complete action without item effect
+          if (typeof console !== 'undefined') console.warn("Auto-mode: no available items for Skill 58; skipping item effect.");
+          skillItemActive = false;
+          // FIXED: Use removeContextByValue instead of pop
+          removeContextByValue('derived');
+          activePendingToken = 0;
+          _BattleManager_endAction.call(this);
+          return;
+
+        } catch (e) {
+          if (typeof console !== 'undefined') console.error("Auto-mode item selection error; proceeding to avoid stall:", e);
+          skillItemActive = false;
+          // FIXED: Use removeContextByValue instead of pop
+          removeContextByValue('derived');
+          activePendingToken = 0;
+          _BattleManager_endAction.call(this);
+          return;
+        }
+      } else {
+        // Interactive branch: show item menu
+        try {
+          const scene = SceneManager._scene;
+          if (scene && typeof scene.commandItem === 'function') {
+            // Only open the menu if the token still matches (defensive)
+            if (myToken === activePendingToken && myToken === pendingItemUseToken) {
+              scene.commandItem();
+              // do not clear activePendingToken here; it will be cleared after selection or in applySelectedItemEffects
+              return; // wait for player selection
+            } else {
+              if (typeof console !== 'undefined') console.log("LotP: token changed before opening menu; skipping.");
+              activePendingToken = 0;
+              _BattleManager_endAction.call(this);
+              return;
+            }
+          } else {
+            if (typeof console !== 'undefined') console.warn("SceneManager._scene.commandItem not available or scene not ready; completing action to avoid stall.");
+            activePendingToken = 0;
+            _BattleManager_endAction.call(this);
+            return;
+          }
+        } catch (e) {
+          if (typeof console !== 'undefined') console.error("Error opening item menu; completing action to avoid stall:", e);
+          activePendingToken = 0;
+          _BattleManager_endAction.call(this);
+          return;
+        }
+      }
+    }
+
+    _BattleManager_endAction.call(this);
+  };
+
+  // --- Intercept OK on item window for interactive LotP flow ---
+  const _Window_BattleItem_callOkHandler = Window_BattleItem.prototype.callOkHandler;
+  Window_BattleItem.prototype.callOkHandler = function() {
+    if (skillItemActive) {
+      selectedItem = this.item();
+      if (!selectedItem) {
+        console.warn("LotP: No item selected on OK.");
+        return;
+      }
+
+      // Record lastItem immediately so Auto-Battle has it later (LotP authoritative + macro)
+      try {
+        if (actingActor && $gameSystem) {
+          // ensure LotP storage exists
+          $gameSystem._lotpLastItems = $gameSystem._lotpLastItems || {};
+          $gameSystem._lotpLastItems[actingActor.actorId()] = selectedItem.id;
+
+          // also keep existing macro write for compatibility
+          $gameSystem._actorMacros = $gameSystem._actorMacros || {};
+          const actorId = actingActor.actorId();
+          const existing = $gameSystem._actorMacros[actorId] || { type: 'skill', id: 58 };
+          existing.type = existing.type || 'skill';
+          existing.id = existing.id || 58;
+          existing.lastItem = selectedItem.id;
+          $gameSystem._actorMacros[actorId] = existing;
+
+          if (typeof console !== 'undefined') console.log("Recorded lastItem for LotP and Auto-Battle (on confirm):", actingActor.name(), "=>", selectedItem.name, "(id:", selectedItem.id, ")");
+        }
+      } catch (e) {
+        if (typeof console !== 'undefined') console.error("Failed to record lastItem on confirm:", e);
+      }
+
+      applySelectedItemEffects();
+      skillItemActive = false;
+      // clear active token after successful interactive selection
+      activePendingToken = 0;
+      this.hide();
+      return;
+    } else {
+      _Window_BattleItem_callOkHandler.call(this);
+    }
+  };
+
+  // Disable cancel during interactive LotP flow
+  const _Window_BattleItem_processCancel = Window_BattleItem.prototype.processCancel;
+  Window_BattleItem.prototype.processCancel = function() {
+    if (skillItemActive) {
+      SoundManager.playBuzzer();
+      return;
+    }
+    _Window_BattleItem_processCancel.call(this);
+  };
+
+  const _Window_BattleItem_callCancelHandler = Window_BattleItem.prototype.callCancelHandler;
+  Window_BattleItem.prototype.callCancelHandler = function() {
+    if (skillItemActive) {
+      SoundManager.playBuzzer();
+      return;
+    }
+    _Window_BattleItem_callCancelHandler.call(this);
+  };
+
+  const _Window_BattleItem_cancel = Window_BattleItem.prototype.cancel;
+  Window_BattleItem.prototype.cancel = function() {
+    if (skillItemActive) {
+      SoundManager.playBuzzer();
+      return;
+    }
+    _Window_BattleItem_cancel.call(this);
+  };
+
+  // --- Apply selected item effects, consume, remove state 28, record lastItem ---
+  function applySelectedItemEffects() {
+    try {
+      if (!selectedItem) {
+        if (typeof console !== 'undefined') console.error("applySelectedItemEffects: no selectedItem set.");
+        return;
+      }
+      if (!actingActor) {
+        if (typeof console !== 'undefined') console.error("applySelectedItemEffects: actingActor is null.");
+        return;
+      }
+
+      // Inventory check
+      if ($gameParty.numItems(selectedItem) <= 0) {
+        if (typeof console !== 'undefined') console.error("applySelectedItemEffects: party has no copies of", selectedItem.name);
+        return;
+      }
+
+      const action = new Game_Action(actingActor);
+      action.setItem(selectedItem.id);
+
+      $gameParty.members().forEach(member => {
+        if (member && member.isAlive()) {
+          try { action.apply(member); } catch (e) { if (typeof console !== 'undefined') console.error("Error applying item to", member.name(), e); }
+        }
+      });
+
+      try { $gameParty.consumeItem(selectedItem); if (typeof console !== 'undefined') console.log("Item consumed:", selectedItem.name); } catch (e) { if (typeof console !== 'undefined') console.error("Error consuming item:", e); }
+
+      try {
+        if (actingActor.isStateAffected(28)) {
+          actingActor.removeState(28);
+          if (typeof console !== 'undefined') console.log("State 28 removed from", actingActor.name());
+        }
+      } catch (e) {
+        if (typeof console !== 'undefined') console.error("Error removing state 28:", e);
+      }
+
+      // Defensive: clear LotP pending flags/tokens so ordinary OKs aren't misinterpreted
+      try {
+        if (typeof pendingItemUse !== 'undefined') pendingItemUse = false;
+        if (typeof skillItemActive !== 'undefined') skillItemActive = false;
+        if (typeof autoModePending !== 'undefined') autoModePending = false;
+        if (typeof activePendingToken !== 'undefined') activePendingToken = 0;
+        if (typeof pendingItemUseToken !== 'undefined') pendingItemUseToken = 0;
+
+        // Also clear derived macro context if it was left set (best-effort)
+        if ($gameTemp && $gameTemp._macroContext && $gameTemp._macroContext.indexOf('derived') !== -1) {
+          try { $gameTemp._macroContext = []; } catch (e) {}
+        }
+
+        if (typeof console !== 'undefined') console.log("LotP: cleared pending tokens/flags on state 28 removal");
+      } catch (e) {
+        if (typeof console !== 'undefined') console.warn("LotP: error clearing pending tokens:", e);
+      }
+
+
+      // Ensure lastItem is recorded (defensive) in both storages
+      try {
+        $gameSystem._lotpLastItems = $gameSystem._lotpLastItems || {};
+        $gameSystem._lotpLastItems[actingActor.actorId()] = selectedItem.id;
+
+        $gameSystem._actorMacros = $gameSystem._actorMacros || {};
+        const existing = $gameSystem._actorMacros[actingActor.actorId()] || { type: 'skill', id: 58 };
+        existing.type = existing.type || 'skill';
+        existing.id = existing.id || 58;
+        existing.lastItem = selectedItem.id;
+        $gameSystem._actorMacros[actingActor.actorId()] = existing;
+      } catch (e) { /* non-fatal */ }
+
+    } catch (e) {
+      if (typeof console !== 'undefined') console.error("applySelectedItemEffects error:", e);
+    } finally {
+      selectedItem = null;
+      actingActor = null;
+      skillItemActive = false;
+      autoModePending = false;
+      // clear active token so stray OK presses won't reuse it
+      activePendingToken = 0;
+    }
+  }
+
+})();
